@@ -796,19 +796,20 @@
         // ========== Google Login Logic ==========
         
         // Trigger Google login
-        function initializeGoogleLogin() {
-            google.accounts.id.initialize({
-                client_id: "506606827288-psimq0egdcsm2546mj2illlh574qqtdc.apps.googleusercontent.com",
-                callback: handleCredentialResponse,
-                auto_select: false,
-                cancel_on_tap_outside: false
-            });
-        }
-
+        // Google Login Configuration
+        const GOOGLE_CLIENT_ID = '506606827288-psimq0egdcsm2546mj2illlh574qqtdc.apps.googleusercontent.com';
+        
         function triggerGoogleLogin() {
-            initializeGoogleLogin();
-            // Use Google Identity Services to trigger the One Tap prompt
-            google.accounts.id.prompt();
+            // Initialize and show the One Tap prompt
+            if (google && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: false
+                });
+                google.accounts.id.prompt();
+            }
         }
         
         // Handle the credential response from Google
@@ -850,6 +851,16 @@
         
         // Check login status on page load
         window.addEventListener('load', function() {
+            // Initialize Google Identity Services
+            if (google && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: false
+                });
+            }
+            
             const savedUser = localStorage.getItem('googleUser');
             if (savedUser) {
                 showUserInfo(JSON.parse(savedUser));
