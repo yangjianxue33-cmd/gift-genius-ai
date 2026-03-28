@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GiftGenius - AI Gift Recommendations</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             margin: 0;
@@ -49,6 +51,82 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Login/User Section */
+        .auth-section {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+        }
+
+        .g_id_onload {
+            display: none;
+        }
+
+        .login-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .login-btn:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        .login-btn img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .user-info {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px 6px 6px;
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .user-info.active {
+            display: flex;
+        }
+
+        .user-info img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .user-info span {
+            font-size: 13px;
+            color: #333;
+        }
+
+        .logout-btn {
+            padding: 4px 10px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .logout-btn:hover {
+            background: #e2e8f0;
         }
 
         .logo {
@@ -438,6 +516,12 @@
             h2 {
                 font-size: 18px;
             }
+            
+            .auth-section {
+                position: static;
+                margin-bottom: 20px;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -446,6 +530,30 @@
         <div class="card">
             <!-- Header -->
             <div class="header">
+                <!-- Google Login Section -->
+                <div class="auth-section">
+                    <!-- Google Identity Services - Login with Google -->
+                    <div class="g_id_onload"
+                         data-client_id="506606827288-psimq0egdcsm2546mj2illlh574qqtdc.apps.googleusercontent.com"
+                         data-login_uri="https://giftgeniuss.com/api/auth/callback/google"
+                         data-callback="handleCredentialResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    
+                    <!-- Show before login -->
+                    <button class="login-btn" id="googleLoginBtn" onclick="triggerGoogleLogin()">
+                        <img src="https://www.google.com/favicon.ico" alt="Google">
+                        <span>Sign in with Google</span>
+                    </button>
+                    
+                    <!-- Show after login -->
+                    <div class="user-info" id="userInfo">
+                        <img id="userAvatar" src="" alt="Avatar">
+                        <span id="userName"></span>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+                
                 <div class="logo">🎁</div>
                 <h1>GiftGenius</h1>
                 <p class="subtitle">AI-Powered Personalized Gift Recommendations</p>
@@ -684,6 +792,61 @@
     </div>
 
     <script>
+        // ========== Google Login Logic ==========
+        
+        // Trigger Google login
+        function triggerGoogleLogin() {
+            // Use Google Identity Services to trigger the One Tap prompt
+            google.accounts.id.prompt();
+        }
+        
+        // Handle the credential response from Google
+        function handleCredentialResponse(response) {
+            // Decode the JWT token to get user info
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            
+            console.log('User signed in:', payload);
+            
+            // Save user info to localStorage
+            localStorage.setItem('googleUser', JSON.stringify(payload));
+            
+            // Update UI
+            showUserInfo(payload);
+        }
+        
+        // Show user info in UI
+        function showUserInfo(user) {
+            document.getElementById('googleLoginBtn').style.display = 'none';
+            document.getElementById('userInfo').classList.add('active');
+            document.getElementById('userAvatar').src = user.picture;
+            document.getElementById('userName').textContent = user.name;
+        }
+        
+        // Logout function
+        function logout() {
+            // Clear localStorage
+            localStorage.removeItem('googleUser');
+            
+            // Reset UI
+            document.getElementById('googleLoginBtn').style.display = 'flex';
+            document.getElementById('userInfo').classList.remove('active');
+            
+            // Sign out from Google (optional - revokes the token)
+            if (google && google.accounts) {
+                google.accounts.id.disableAutoSelect();
+            }
+        }
+        
+        // Check login status on page load
+        window.addEventListener('load', function() {
+            const savedUser = localStorage.getItem('googleUser');
+            if (savedUser) {
+                showUserInfo(JSON.parse(savedUser));
+            }
+        });
+
+        // ========== Original GiftGenius Logic ==========
+        
         // State
         let currentStep = 1;
         let formData = {
