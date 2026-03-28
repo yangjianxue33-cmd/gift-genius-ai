@@ -796,7 +796,17 @@
         // ========== Google Login Logic ==========
         
         // Trigger Google login
+        function initializeGoogleLogin() {
+            google.accounts.id.initialize({
+                client_id: "506606827288-psimq0egdcsm2546mj2illlh574qqtdc.apps.googleusercontent.com",
+                callback: handleCredentialResponse,
+                auto_select: false,
+                cancel_on_tap_outside: false
+            });
+        }
+
         function triggerGoogleLogin() {
+            initializeGoogleLogin();
             // Use Google Identity Services to trigger the One Tap prompt
             google.accounts.id.prompt();
         }
