@@ -61,6 +61,10 @@
             top: 0;
             right: 0;
         }
+        
+        #googleButtonContainer {
+            margin-bottom: 10px;
+        }
 
         .g_id_onload {
             display: none;
@@ -541,8 +545,11 @@
                          data-auto_prompt="false">
                     </div>
                     
-                    <!-- Show before login -->
-                    <button class="login-btn" id="googleLoginBtn" onclick="triggerGoogleLogin()">
+                    <!-- Google rendered button container -->
+                    <div id="googleButtonContainer"></div>
+                    
+                    <!-- Custom login button (fallback) -->
+                    <button class="login-btn" id="googleLoginBtn" onclick="triggerGoogleLogin()" style="display:none;">
                         <img src="https://www.google.com/favicon.ico" alt="Google">
                         <span>Sign in with Google</span>
                     </button>
@@ -800,16 +807,23 @@
         const GOOGLE_CLIENT_ID = '506606827288-psimq0egdcsm2546mj2illlh574qqtdc.apps.googleusercontent.com';
         
         function triggerGoogleLogin() {
-            // Initialize and show the One Tap prompt
-            if (google && google.accounts) {
-                google.accounts.id.initialize({
-                    client_id: GOOGLE_CLIENT_ID,
-                    callback: handleCredentialResponse,
-                    auto_select: false,
-                    cancel_on_tap_outside: false
-                });
-                google.accounts.id.prompt();
-            }
+            // Fallback to custom button if needed
+            document.getElementById('googleLoginBtn').style.display = 'flex';
+            document.getElementById('googleButtonContainer').style.display = 'none';
+        }
+        
+        // Handle the credential response (for popup mode)
+        function handleCredentialResponse(response) {
+            // Decode the JWT token to get user info
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            
+            console.log('User signed in:', payload);
+            
+            // Save user info to localStorage
+            localStorage.setItem('googleUser', JSON.stringify(payload));
+            
+            // Update UI
+            showUserInfo(payload);
         }
         
         // Handle the credential response from Google
@@ -851,7 +865,7 @@
         
         // Check login status on page load
         window.addEventListener('load', function() {
-            // Initialize Google Identity Services
+            // Initialize Google Identity Services and render button
             if (google && google.accounts) {
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
@@ -859,6 +873,18 @@
                     auto_select: false,
                     cancel_on_tap_outside: false
                 });
+                
+                // Render the Google button
+                google.accounts.id.renderButton(
+                    document.getElementById('googleButtonContainer'),
+                    {
+                        theme: 'outline',
+                        size: 'medium',
+                        width: '200',
+                        text: 'signin_with',
+                        shape: 'rectangular'
+                    }
+                );
             }
             
             const savedUser = localStorage.getItem('googleUser');
